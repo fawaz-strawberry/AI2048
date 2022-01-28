@@ -1,5 +1,7 @@
 import random
 
+import numpy
+
 class GameBoard:
     def __init__(self):
         self.board = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
@@ -54,6 +56,7 @@ class GameBoard:
     def slideRight(self):
         cur_val = 0
         is_valid = False
+        latest_score = 0
         for row in range(self.board_height):
             list_vals = []
 
@@ -63,6 +66,7 @@ class GameBoard:
                 if(self.board[col][row] != 0 and self.board[col][row] == cur_val):
                     list_vals.append(cur_val * 2)
                     self.score += cur_val * 2
+                    latest_score += cur_val * 2
                     cur_val = 0
                 elif(self.board[col][row] != 0 and cur_val == 0):
                     cur_val = self.board[col][row]
@@ -83,10 +87,17 @@ class GameBoard:
                     self.board[(self.board_width - 1) - col][row] = 0
         if(is_valid):
             self.spawnValue()
+        else:
+            self.score -= 1
+            latest_score -= 1
+
+        return latest_score
+
 
     def slideLeft(self):
         cur_val = 0
         is_valid = False
+        latest_score = 0
         for row in range(self.board_height):
             list_vals = []
 
@@ -98,6 +109,7 @@ class GameBoard:
                 if(self.board[col][row] != 0 and self.board[col][row] == cur_val):
                     list_vals.append(cur_val * 2)
                     self.score += cur_val * 2
+                    latest_score += cur_val * 2
                     cur_val = 0
                 elif(self.board[col][row] != 0 and cur_val == 0):
                     cur_val = self.board[col][row]
@@ -118,11 +130,18 @@ class GameBoard:
                     self.board[col][row] = 0
         if(is_valid):
             self.spawnValue()
+        else:
+            self.score -= 1
+            latest_score -= 1
+
+        return latest_score
 
 
     def slideUp(self):
         cur_val = 0
         is_valid = False
+        latest_score = 0
+
         for col in range(self.board_width):
             list_vals = []
 
@@ -134,6 +153,7 @@ class GameBoard:
                 if(self.board[col][row] != 0 and self.board[col][row] == cur_val):
                     list_vals.append(cur_val * 2)
                     self.score += cur_val * 2
+                    latest_score += cur_val * 2
                     cur_val = 0
                 elif(self.board[col][row] != 0 and cur_val == 0):
                     cur_val = self.board[col][row]
@@ -154,10 +174,16 @@ class GameBoard:
                     self.board[col][row] = 0
         if(is_valid):
             self.spawnValue()
+        else:
+            self.score -= 1
+            latest_score -= 1
+
+        return latest_score
 
     def slideDown(self):
         cur_val = 0
         is_valid = False
+        latest_score = 0
         for col in range(self.board_width):
             list_vals = []
 
@@ -170,6 +196,7 @@ class GameBoard:
                 if(self.board[col][row] != 0 and self.board[col][row] == cur_val):
                     list_vals.append(cur_val * 2)
                     self.score += cur_val * 2
+                    latest_score += cur_val * 2
                     cur_val = 0
                 elif(self.board[col][row] != 0 and cur_val == 0):
                     cur_val = self.board[col][row]
@@ -190,18 +217,56 @@ class GameBoard:
                     self.board[col][(self.board_height - 1) - row] = 0
         if(is_valid):
             self.spawnValue()
-    
+        else:
+            self.score -= 1
+            latest_score -= 1
+
+        return latest_score
+
     def checkBoard(self):
         available_move = False
+
+        for row in range(self.board_height):
+            for col in range(self.board_width):
+                if(self.board[col][row] == 0):
+                    return True
+
         for row in range(self.board_height - 1):
             for col in range(self.board_width - 1):
                 if(self.board[col][row] == self.board[col + 1][row] or self.board[col][row] == 0):
                     available_move = True
-                    break
+                    return available_move
         if(available_move == False):
             for col in range(self.board_width - 1):
                 for row in range(self.board_height - 1):
                     if(self.board[col][row] == self.board[col][row + 1] or self.board[col][row] == 0):
-                        available_move = True       
-
+                        available_move = True
+                        return available_move
         return available_move
+
+    def reset(self):
+        self.board = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+        self.board_height = 4
+        self.board_width = 4
+        self.isAlive = True
+        self.score = 0
+        self.spawnValue()
+        self.spawnValue()
+        return numpy.array(self.get_flat_board(), dtype=numpy.float32)
+
+    def step(self, action):
+
+        score = 0
+        if action == 0:
+            score = self.slideUp()
+        elif action == 1:
+            score = self.slideRight()
+        elif action == 2:
+            score = self.slideDown()
+        elif action == 3:
+            score = self.slideLeft()
+
+        if score < 0:
+           return numpy.array(self.get_flat_board(), dtype=numpy.float32), score, True, {} 
+
+        return numpy.array(self.get_flat_board(), dtype=numpy.float32), score, not self.checkBoard(), {}

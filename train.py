@@ -3,8 +3,10 @@ from game import GameBoard
 from ai import NeuralNetwork
 from ai import Node
 import random
+import time
+import timeit
 
-network_layout = [16, 4]
+network_layout = [16, 16, 16, 4]
 sample_inputs = [2, 4, 8, 16, 512, 2, 4, 8, 16, 512, 2, 4, 8, 16, 512, 1024]
 NUM_INPUTS = 16
 sample_net = NeuralNetwork(network_layout, NUM_INPUTS)
@@ -15,12 +17,15 @@ def mutation(rate, the_network):
             
             new_node = the_network.get_node(i, j)
             node_weights = new_node.getWeights()
+            node_bias = new_node.getBias()
 
             if(random.random() <= rate):
                 # print("Modifying")
                 # print("i: " + str(i) + " j: " + str(j))
                 for k in range(len(node_weights)):
                     node_weights[k] = node_weights[k] + ((random.random() - .5) / 4)
+                
+                new_node.setBias(node_bias + ((random.random() - .5) / 4))
                 new_node.setWeights(node_weights)
                 the_network.replace_node(i, j, new_node)
     return the_network
@@ -40,8 +45,13 @@ def cross_breed(first_parent, second_parent):
 
 
 def play_turn(network, game):
+
+    
+
     inputs = game.get_flat_board()
+    # feeding_time = time.time()
     output = network.feed_forward(inputs)
+    # print("Time for output: " + str(time.time() - feeding_time))
     move = output.index(max(output))
     if(move == 0):
         game.slideUp()
@@ -61,7 +71,7 @@ def generate_generation(my_nets, scores):
     avg_score = 0
 
     #top 10% will be copied
-    for i in range(int(nets_to_gen * .2)):
+    for i in range(int(nets_to_gen * .3)):
         max_index = scores.index(max(scores))
         avg_score += scores[i]
         new_nets.append(deepcopy(my_nets[max_index]))
@@ -71,7 +81,7 @@ def generate_generation(my_nets, scores):
     print("Average Score of top 10%:" + str(avg_score/float(len(new_nets))))
     
     #next 60% will be bred
-    for i in range(int(nets_to_gen * .7)):
+    for i in range(int(nets_to_gen * .5)):
         new_network = cross_breed(new_nets[random.randint(0, len(new_nets) - 1)], new_nets[random.randint(0, len(new_nets) - 1)])
         new_network = mutation(.1, new_network)
         new_nets.append(new_network)
@@ -88,10 +98,19 @@ scores = []
 games = []
 
 
-num_moves = 1000
+num_moves = 50
 num_instances = 1000
 num_generations = 100
 
+# testNet = NeuralNetwork(network_layout, NUM_INPUTS)
+# testGame = GameBoard()
+
+# startTime = time.time()
+# for i in range(num_moves):
+#     play_turn(testNet, testGame)
+
+# executionTime = time.time() - startTime
+# print("Execution Time: " + str(executionTime))
 
 for i in range(num_instances):
     networks.append(NeuralNetwork(network_layout, NUM_INPUTS))
@@ -110,6 +129,8 @@ for x in range(num_generations):
     print("Top Gameboard")
     best_game = games[scores.index(max(scores))]
     best_game.displayBoard()
+    if((x+1) % 10 == 0):
+        num_moves += 200
 
     saved_scores = deepcopy(scores)
 
@@ -123,5 +144,5 @@ for x in range(num_generations):
 
 
 
-print("Final Scores: ", end="")
-print(saved_scores)
+# print("Final Scores: ", end="")
+# print(saved_scores)

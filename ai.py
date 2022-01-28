@@ -1,6 +1,6 @@
 import random
 from time import process_time_ns
-import copy
+import copy 
 
 GAME_VALUES = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192]
 
@@ -21,6 +21,9 @@ class Node:
     def setWeights(self, new_weights):
         for i in range(len(new_weights)):
             self.weights[i] = new_weights[i]
+
+    def setBias(self, new_bias):
+        self.bias = new_bias
 
     def RELU(self, input):
         return max(0, input)
